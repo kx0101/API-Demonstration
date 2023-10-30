@@ -64,12 +64,6 @@ namespace apiprac
                 return BadRequest(villaDTO);
             }
 
-            if (villaDTO.Id > 0)
-            {
-                _logger.Log($"Invalid id: {villaDTO.Id}", "error");
-                return StatusCode(StatusCodes.Status500InternalServerError);
-            }
-
             if (villaDTO.Rate < 0)
             {
                 _logger.Log("Rate cannot be negative", "error");
@@ -93,10 +87,10 @@ namespace apiprac
             _db.SaveChanges();
 
             _logger.Log($"Newly villa created {villaDTO.Name}", "");
-            return CreatedAtAction(nameof(GetVillas), new { id = villaDTO.Id }, villaDTO);
+            return CreatedAtAction(nameof(GetVillas), new { Name = villaDTO.Name }, villaDTO);
         }
 
-        [HttpDelete("{id:Guid}", Name = "DeleteVilla")]
+        [HttpDelete("{id:guid}", Name = "DeleteVilla")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -117,7 +111,7 @@ namespace apiprac
             return Ok($"{villa.Name} Villa deleted successfully");
         }
 
-        [HttpPut("{id:int}", Name = "UpdateVilla")]
+        [HttpPut("{id:guid}", Name = "UpdateVilla")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
