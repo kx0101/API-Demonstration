@@ -9,5 +9,11 @@ namespace apiprac
         [Required]
         [MaxLength(50)]
         public string Name { get; set; }
+
+        [Required]
+        public string Rate { get; set; }
+
+        [Required]
+        public string Sqft { get; set; }
     }
 }
