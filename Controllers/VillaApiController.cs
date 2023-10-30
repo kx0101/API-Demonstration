@@ -6,11 +6,19 @@ namespace apiprac
     [ApiController]
     public class VillasApiController : ControllerBase
     {
+        private readonly ILogging _logger;
+
+        public VillasApiController(ILogging logger)
+        {
+            _logger = logger;
+        }
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public ActionResult<IEnumerable<VillaDTO>> GetVillas()
         {
+            _logger.Log("Getting all villas", "");
 
             return Ok(VillaStore.villaList);
         }
@@ -23,6 +31,8 @@ namespace apiprac
         {
             if (id <= 0)
             {
+                _logger.Log("Invalid id: " + id, "error");
+
                 return BadRequest();
             }
 
@@ -30,9 +40,12 @@ namespace apiprac
 
             if (villa == null)
             {
+                _logger.Log("Villa not found" + id, "error");
+
                 return NotFound();
             }
 
+            _logger.Log($"Returned {villa.Name}" + id, "");
             return Ok(villa);
         }
 
@@ -47,22 +60,26 @@ namespace apiprac
             {
                 ModelState.AddModelError("CustomError", "Villa name must be unique");
 
+                _logger.Log("Villa name must be unique", "error");
                 return BadRequest(ModelState);
             }
 
             if (villaDTO == null)
             {
+                _logger.Log("Villa is empty", "error");
                 return BadRequest(villaDTO);
             }
 
             if (villaDTO.Id > 0)
             {
+                _logger.Log($"Invalid id: {villaDTO.Id}", "error");
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
             villaDTO.Id = VillaStore.villaList.OrderByDescending(villa => villa.Id).FirstOrDefault().Id + 1;
             VillaStore.villaList.Add(villaDTO);
 
+            _logger.Log($"Newly villa created {villaDTO.Name}", "");
             return CreatedAtAction(nameof(GetVillas), new { id = villaDTO.Id }, villaDTO);
         }
 
@@ -74,6 +91,7 @@ namespace apiprac
         {
             if (id == 0)
             {
+                _logger.Log("Invalid id: " + id, "error");
                 return BadRequest();
             }
 
@@ -81,11 +99,13 @@ namespace apiprac
 
             if (villa == null)
             {
+                _logger.Log("Villa is empty", "error");
                 return NotFound();
             }
 
             VillaStore.villaList.Remove(villa);
 
+            _logger.Log($"Villa {villa.Name} successfully", "");
             return Ok($"{villa.Name} Villa deleted successfully");
         }
 
@@ -97,6 +117,7 @@ namespace apiprac
         {
             if (id == 0)
             {
+                _logger.Log("Invalid id: " + id, "error");
                 return BadRequest();
             }
 
@@ -104,11 +125,13 @@ namespace apiprac
 
             if (villa == null)
             {
+                _logger.Log("Villa is empty", "error");
                 return NotFound();
             }
 
             villa.Name = villaDTO.Name;
 
+            _logger.Log($"Villa {villa.Name} updated successfully", "warning");
             return Ok(villa);
         }
     }
