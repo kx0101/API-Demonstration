@@ -24,11 +24,10 @@ namespace apiprac.Migrations
 
             modelBuilder.Entity("apiprac.Villa", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -37,13 +36,11 @@ namespace apiprac.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Rate")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Rate")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("Sqft")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Sqft")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");

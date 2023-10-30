@@ -11,9 +11,9 @@ namespace apiprac
         public string Name { get; set; }
 
         [Required]
-        public string Rate { get; set; }
+        public int Rate { get; set; }
 
         [Required]
-        public string Sqft { get; set; }
+        public int Sqft { get; set; }
     }
 }

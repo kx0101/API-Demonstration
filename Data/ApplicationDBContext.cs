@@ -16,6 +16,13 @@ namespace apiprac
             optionsBuilder.UseNpgsql(Configuration.GetConnectionString("DefaultSQLConnection"));
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Villa>().Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+        }
+
         public DbSet<Villa> Villas { get; set; }
 
     }

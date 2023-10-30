@@ -7,36 +7,30 @@ namespace apiprac
     public class VillasApiController : ControllerBase
     {
         private readonly ILogging _logger;
+        private readonly ApplicationDBContext _db;
 
-        public VillasApiController(ILogging logger)
+        public VillasApiController(ILogging logger, ApplicationDBContext db)
         {
             _logger = logger;
+            _db = db;
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
         public ActionResult<IEnumerable<VillaDTO>> GetVillas()
         {
             _logger.Log("Getting all villas", "");
 
-            return Ok(VillaStore.villaList);
+            return Ok(_db.Villas);
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult<VillaDTO> GetVilla(int id)
+        public ActionResult<VillaDTO> GetVilla(Guid id)
         {
-            if (id <= 0)
-            {
-                _logger.Log("Invalid id: " + id, "error");
-
-                return BadRequest();
-            }
-
-            var villa = VillaStore.villaList.FirstOrDefault(villa => villa.Id == id);
+            var villa = _db.Villas.FirstOrDefault(villa => villa.Id == id);
 
             if (villa == null)
             {
@@ -56,7 +50,7 @@ namespace apiprac
         public ActionResult<VillaDTO> CreateVilla([FromBody] VillaDTO villaDTO)
         {
 
-            if (VillaStore.villaList.FirstOrDefault(villa => villa.Name.ToLower() == villaDTO.Name.ToLower()) != null)
+            if (_db.Villas.FirstOrDefault(villa => villa.Name.ToLower() == villaDTO.Name.ToLower()) != null)
             {
                 ModelState.AddModelError("CustomError", "Villa name must be unique");
 
@@ -76,26 +70,39 @@ namespace apiprac
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            villaDTO.Id = VillaStore.villaList.OrderByDescending(villa => villa.Id).FirstOrDefault().Id + 1;
-            VillaStore.villaList.Add(villaDTO);
+            if (villaDTO.Rate < 0)
+            {
+                _logger.Log("Rate cannot be negative", "error");
+                return BadRequest(villaDTO);
+            }
+
+            if (villaDTO.Sqft < 0)
+            {
+                _logger.Log("Sqft cannot be negative", "error");
+                return BadRequest(villaDTO);
+            }
+
+            var newVilla = new Villa
+            {
+                Name = villaDTO.Name,
+                Rate = villaDTO.Rate,
+                Sqft = villaDTO.Sqft,
+            };
+
+            _db.Villas.Add(newVilla);
+            _db.SaveChanges();
 
             _logger.Log($"Newly villa created {villaDTO.Name}", "");
             return CreatedAtAction(nameof(GetVillas), new { id = villaDTO.Id }, villaDTO);
         }
 
-        [HttpDelete("{id:int}", Name = "DeleteVilla")]
+        [HttpDelete("{id:Guid}", Name = "DeleteVilla")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult DeleteVilla(int id)
+        public IActionResult DeleteVilla(Guid id)
         {
-            if (id == 0)
-            {
-                _logger.Log("Invalid id: " + id, "error");
-                return BadRequest();
-            }
-
-            var villa = VillaStore.villaList.FirstOrDefault(villa => villa.Id == id);
+            var villa = _db.Villas.FirstOrDefault(villa => villa.Id == id);
 
             if (villa == null)
             {
@@ -103,7 +110,8 @@ namespace apiprac
                 return NotFound();
             }
 
-            VillaStore.villaList.Remove(villa);
+            _db.Villas.Remove(villa);
+            _db.SaveChanges();
 
             _logger.Log($"Villa {villa.Name} successfully", "");
             return Ok($"{villa.Name} Villa deleted successfully");
@@ -113,15 +121,9 @@ namespace apiprac
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult UpdateVilla(int id, [FromBody] VillaDTO villaDTO)
+        public IActionResult UpdateVilla(Guid id, [FromBody] VillaDTO villaDTO)
         {
-            if (id == 0)
-            {
-                _logger.Log("Invalid id: " + id, "error");
-                return BadRequest();
-            }
-
-            var villa = VillaStore.villaList.FirstOrDefault(villa => villa.Id == id);
+            var villa = _db.Villas.FirstOrDefault(villa => villa.Id == id);
 
             if (villa == null)
             {
@@ -129,7 +131,23 @@ namespace apiprac
                 return NotFound();
             }
 
+            if (villaDTO.Rate < 0)
+            {
+                _logger.Log("Rate cannot be negative", "error");
+                return BadRequest(villaDTO);
+            }
+
+            if (villaDTO.Sqft < 0)
+            {
+                _logger.Log("Sqft cannot be negative", "error");
+                return BadRequest(villaDTO);
+            }
+
             villa.Name = villaDTO.Name;
+            villa.Rate = villaDTO.Rate;
+            villa.Sqft = villaDTO.Sqft;
+
+            _db.SaveChanges();
 
             _logger.Log($"Villa {villa.Name} updated successfully", "warning");
             return Ok(villa);
