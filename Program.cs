@@ -8,6 +8,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<ILogging, Logging>();
 builder.Services.AddDbContext<ApplicationDBContext>();
 builder.Services.AddAutoMapper(typeof(MappingConfig));
+builder.Services.AddScoped<IVillaRepository, VillaRepository>();
 
 var app = builder.Build();
 
