@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace apiprac.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateToGuidIds : Migration
+    public partial class finals : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,9 +18,7 @@ namespace apiprac.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Rate = table.Column<int>(type: "integer", nullable: false),
-                    Sqft = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Sqft = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

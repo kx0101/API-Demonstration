@@ -12,8 +12,8 @@ using apiprac;
 namespace apiprac.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20231030200140_UpdateToGuidIds")]
-    partial class UpdateToGuidIds
+    [Migration("20231031104755_finals")]
+    partial class finals
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,9 +32,6 @@ namespace apiprac.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -44,9 +41,6 @@ namespace apiprac.Migrations
 
                     b.Property<int>("Sqft")
                         .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 

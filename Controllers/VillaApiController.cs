@@ -1,4 +1,6 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace apiprac
 {
@@ -8,29 +10,33 @@ namespace apiprac
     {
         private readonly ILogging _logger;
         private readonly ApplicationDBContext _db;
+        private readonly IMapper _mapper;
 
-        public VillasApiController(ILogging logger, ApplicationDBContext db)
+        public VillasApiController(ILogging logger, ApplicationDBContext db, IMapper mapper)
         {
             _logger = logger;
             _db = db;
+            _mapper = mapper;
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<VillaDTO>> GetVillas()
+        public async Task<ActionResult<IEnumerable<VillaDTO>>> GetVillas()
         {
             _logger.Log("Getting all villas", "");
 
-            return Ok(_db.Villas);
+            IEnumerable<Villa> villaList = await _db.Villas.ToListAsync();
+
+            return Ok(_mapper.Map<List<VillaDTO>>(villaList));
         }
 
         [HttpGet("{id:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult<VillaDTO> GetVilla(Guid id)
+        public async Task<ActionResult<VillaDTO>> GetVilla(Guid id)
         {
-            var villa = _db.Villas.FirstOrDefault(villa => villa.Id == id);
+            var villa = await _db.Villas.FirstOrDefaultAsync(villa => villa.Id == id);
 
             if (villa == null)
             {
@@ -40,17 +46,16 @@ namespace apiprac
             }
 
             _logger.Log($"Returned {villa.Name}" + id, "");
-            return Ok(villa);
+            return Ok(_mapper.Map<VillaDTO>(villa));
         }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult<VillaDTO> CreateVilla([FromBody] VillaDTO villaDTO)
+        public async Task<ActionResult<VillaDTO>> CreateVilla([FromBody] VillaCreateDTO createDTO)
         {
-
-            if (_db.Villas.FirstOrDefault(villa => villa.Name.ToLower() == villaDTO.Name.ToLower()) != null)
+            if (await _db.Villas.FirstOrDefaultAsync(villa => villa.Name.ToLower() == createDTO.Name.ToLower()) != null)
             {
                 ModelState.AddModelError("CustomError", "Villa name must be unique");
 
@@ -58,45 +63,40 @@ namespace apiprac
                 return BadRequest(ModelState);
             }
 
-            if (villaDTO == null)
+            if (createDTO == null)
             {
                 _logger.Log("Villa is empty", "error");
-                return BadRequest(villaDTO);
+                return BadRequest(createDTO);
             }
 
-            if (villaDTO.Rate < 0)
+            if (createDTO.Rate < 0)
             {
                 _logger.Log("Rate cannot be negative", "error");
-                return BadRequest(villaDTO);
+                return BadRequest(createDTO);
             }
 
-            if (villaDTO.Sqft < 0)
+            if (createDTO.Sqft < 0)
             {
                 _logger.Log("Sqft cannot be negative", "error");
-                return BadRequest(villaDTO);
+                return BadRequest(createDTO);
             }
 
-            var newVilla = new Villa
-            {
-                Name = villaDTO.Name,
-                Rate = villaDTO.Rate,
-                Sqft = villaDTO.Sqft,
-            };
+            Villa model = _mapper.Map<Villa>(createDTO);
 
-            _db.Villas.Add(newVilla);
-            _db.SaveChanges();
+            await _db.Villas.AddAsync(model);
+            await _db.SaveChangesAsync();
 
-            _logger.Log($"Newly villa created {villaDTO.Name}", "");
-            return CreatedAtAction(nameof(GetVillas), new { Name = villaDTO.Name }, villaDTO);
+            _logger.Log($"Newly villa created {createDTO.Name}", "");
+            return CreatedAtAction(nameof(GetVillas), new { Name = createDTO.Name }, createDTO);
         }
 
         [HttpDelete("{id:guid}", Name = "DeleteVilla")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult DeleteVilla(Guid id)
+        public async Task<IActionResult> DeleteVilla(Guid id)
         {
-            var villa = _db.Villas.FirstOrDefault(villa => villa.Id == id);
+            var villa = await _db.Villas.FirstOrDefaultAsync(villa => villa.Id == id);
 
             if (villa == null)
             {
@@ -105,7 +105,7 @@ namespace apiprac
             }
 
             _db.Villas.Remove(villa);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             _logger.Log($"Villa {villa.Name} successfully", "");
             return Ok($"{villa.Name} Villa deleted successfully");
@@ -115,9 +115,9 @@ namespace apiprac
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult UpdateVilla(Guid id, [FromBody] VillaDTO villaDTO)
+        public async Task<IActionResult> UpdateVilla(Guid id, [FromBody] VillaUpdateDTO updateDTO)
         {
-            var villa = _db.Villas.FirstOrDefault(villa => villa.Id == id);
+            var villa = await _db.Villas.FirstOrDefaultAsync(villa => villa.Id == id);
 
             if (villa == null)
             {
@@ -125,23 +125,21 @@ namespace apiprac
                 return NotFound();
             }
 
-            if (villaDTO.Rate < 0)
+            if (updateDTO.Rate < 0)
             {
                 _logger.Log("Rate cannot be negative", "error");
-                return BadRequest(villaDTO);
+                return BadRequest(updateDTO);
             }
 
-            if (villaDTO.Sqft < 0)
+            if (updateDTO.Sqft < 0)
             {
                 _logger.Log("Sqft cannot be negative", "error");
-                return BadRequest(villaDTO);
+                return BadRequest(updateDTO);
             }
 
-            villa.Name = villaDTO.Name;
-            villa.Rate = villaDTO.Rate;
-            villa.Sqft = villaDTO.Sqft;
+            Villa model = _mapper.Map<Villa>(updateDTO);
 
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             _logger.Log($"Villa {villa.Name} updated successfully", "warning");
             return Ok(villa);
