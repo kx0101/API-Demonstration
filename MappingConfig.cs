@@ -6,13 +6,17 @@ namespace apiprac
     {
         public MappingConfig()
         {
-            CreateMap<Villa, VillaDTO>();
+            CreateMap<Villa, VillaDTO>().ReverseMap();
 
-            CreateMap<VillaDTO, Villa>();
+            CreateMap<Villa, VillaCreateDTO>().ReverseMap();
 
-            CreateMap<VillaCreateDTO, Villa>();
+            CreateMap<Villa, VillaUpdateDTO>().ReverseMap();
 
-            CreateMap<VillaUpdateDTO, Villa>();
+            CreateMap<VillaNumber, VillaNumberDTO>().ReverseMap();
+
+            CreateMap<VillaNumber, VillaNumberCreateDTO>().ReverseMap();
+
+            CreateMap<VillaNumber, VillaNumberUpdateDTO>().ReverseMap();
         }
     }
 }

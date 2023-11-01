@@ -4,18 +4,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace apiprac
 {
-    [Route("api/villas")]
+    [Route("api/villanumbers")]
     [ApiController]
-    public class VillasApiController : ControllerBase
+    public class VillasNumberApiController : ControllerBase
     {
         private readonly ILogging _logger;
+        private readonly IVillaNumberRepository _dbVillaNumber;
         private readonly IVillaRepository _dbVilla;
         private readonly IMapper _mapper;
         protected APIResponse _response;
 
-        public VillasApiController(ILogging logger, IVillaRepository dbVilla, IMapper mapper)
+        public VillasNumberApiController(ILogging logger, IVillaNumberRepository dbVillaNumber, IVillaRepository dbVilla, IMapper mapper)
         {
             _logger = logger;
+            _dbVillaNumber = dbVillaNumber;
             _dbVilla = dbVilla;
             _mapper = mapper;
 
@@ -24,15 +26,15 @@ namespace apiprac
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<APIResponse>> GetVillas()
+        public async Task<ActionResult<APIResponse>> GetVillaNumbers()
         {
-            _logger.Log("Getting all villas", "");
+            _logger.Log("Getting all villa numbers", "");
 
             try
             {
-                IEnumerable<Villa> villaList = await _dbVilla.FindByCriteriaAsync();
+                IEnumerable<VillaNumber> villaList = await _dbVillaNumber.FindByCriteriaAsync();
 
-                _response.Data = _mapper.Map<List<VillaDTO>>(villaList);
+                _response.Data = _mapper.Map<List<VillaNumberDTO>>(villaList);
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
 
@@ -54,26 +56,26 @@ namespace apiprac
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> GetVillaById(Guid id)
+        public async Task<ActionResult<APIResponse>> GetVillaNumberById(Guid id)
         {
             try
             {
-                var villa = await _dbVilla.FindByIdAsync(villa => villa.Id == id);
+                var villaNumber = await _dbVillaNumber.FindByIdAsync(villa => villa.VillaNo == id);
 
-                if (villa == null)
+                if (villaNumber == null)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string>() { "Villa not found" };
+                    _response.ErrorMessages = new List<string>() { "VillaNumber not found" };
 
-                    _logger.Log("Villa not found" + id, "error");
+                    _logger.Log("VillaNumber not found" + id, "error");
 
-                    return NotFound();
+                    return NotFound(_response);
                 }
 
-                _logger.Log($"Returned {villa.Name}" + id, "");
+                _logger.Log($"Returned {villaNumber.VillaNo}" + id, "");
 
-                _response.Data = _mapper.Map<VillaDTO>(villa);
+                _response.Data = _mapper.Map<VillaNumberDTO>(villaNumber);
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
 
@@ -94,17 +96,18 @@ namespace apiprac
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> CreateVilla([FromBody] VillaCreateDTO createDTO)
+        public async Task<ActionResult<APIResponse>> CreateVillaNumber([FromBody] VillaNumberCreateDTO createDTO)
         {
             try
             {
-                if (await _dbVilla.FindByIdAsync(villa => villa.Name.ToLower() == createDTO.Name.ToLower()) != null)
+                if (await _dbVilla.FindByIdAsync(u => u.Id == createDTO.VillaId) == null)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string>() { "Villa name must be unique" };
+                    _response.ErrorMessages = new List<string>() { "Villa ID is invalid" };
 
-                    _logger.Log("Villa name must be unique", "error");
+                    _logger.Log("Villa ID is invalid", "error");
+
                     return BadRequest(_response);
                 }
 
@@ -112,50 +115,31 @@ namespace apiprac
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string>() { "Villa is empty" };
+                    _response.ErrorMessages = new List<string>() { "VillaNumber is empty" };
 
-                    _logger.Log("Villa is empty", "error");
-
-                    return BadRequest(_response);
-                }
-
-                if (createDTO.Rate < 0)
-                {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string>() { "Rate cannot be negative" };
-
-                    _logger.Log("Rate cannot be negative", "error");
+                    _logger.Log("VillaNumber is empty", "error");
 
                     return BadRequest(_response);
                 }
 
-                if (createDTO.Sqft < 0)
-                {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string>() { "Sqft cannot be negative" };
+                VillaNumber villaNumber = _mapper.Map<VillaNumber>(createDTO);
 
-                    _logger.Log("Sqft cannot be negative", "error");
+                await _dbVillaNumber.CreateAsync(villaNumber);
+                await _dbVillaNumber.SaveAsync();
 
-                    return BadRequest(_response);
-                }
-
-                Villa villa = _mapper.Map<Villa>(createDTO);
-
-                await _dbVilla.CreateAsync(villa);
-                await _dbVilla.SaveAsync();
-
-                _logger.Log($"Newly villa created {createDTO.Name}", "");
-
-                _response.Data = _mapper.Map<VillaDTO>(villa);
+                _response.Data = _mapper.Map<VillaNumberDTO>(villaNumber);
                 _response.StatusCode = HttpStatusCode.Created;
                 _response.IsSuccess = true;
 
-                return CreatedAtAction(nameof(GetVillas), new { Name = villa.Name }, _response);
+                return CreatedAtAction(nameof(GetVillaNumbers), new { SpecialDetails = villaNumber.SpecialDetails }, _response);
             }
             catch (Exception ex)
             {
+                if (ex.InnerException != null)
+                {
+                    _logger.Log("Inner Exception: " + ex.InnerException.Message, "error");
+                }
+
                 _logger.Log(ex.Message, "error");
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
@@ -169,27 +153,27 @@ namespace apiprac
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> DeleteVilla(Guid id)
+        public async Task<ActionResult<APIResponse>> DeleteVillaNumber(Guid id)
         {
 
             try
             {
-                var villa = await _dbVilla.FindByIdAsync(villa => villa.Id == id);
+                var villaNumber = await _dbVillaNumber.FindByIdAsync(villa => villa.VillaNo == id);
 
-                if (villa == null)
+                if (villaNumber == null)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string>() { "Villa not found" };
+                    _response.ErrorMessages = new List<string>() { "VillaNumber not found" };
 
-                    _logger.Log("Villa not found", "error");
+                    _logger.Log("VillaNumber not found", "error");
                     return NotFound();
                 }
 
-                await _dbVilla.RemoveAsync(villa);
-                await _dbVilla.SaveAsync();
+                await _dbVillaNumber.RemoveAsync(villaNumber);
+                await _dbVillaNumber.SaveAsync();
 
-                _logger.Log($"Villa {villa.Name} successfully", "");
+                _logger.Log($"VillaNumber {villaNumber.VillaNo} successfully", "");
 
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
@@ -207,58 +191,47 @@ namespace apiprac
             return _response;
         }
 
-        [HttpPut("{id:guid}")]
+        [HttpPut("{id:guid}", Name = "UpdateVilla")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> UpdateVilla(Guid id, [FromBody] VillaUpdateDTO updateDTO)
+        public async Task<ActionResult<APIResponse>> UpdateVillaNumber(Guid id, [FromBody] VillaNumberUpdateDTO updateDTO)
         {
 
             try
             {
-                var villa = await _dbVilla.FindByIdAsync(villa => villa.Id == id);
+                var villaNumber = await _dbVillaNumber.FindByIdAsync(villa => villa.VillaNo == id);
 
-                if (villa == null)
+                if (villaNumber == null)
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string>() { "VillaNumber not found" };
+
+                    _logger.Log("VillaNumber is empty", "error");
+                    return NotFound();
+                }
+
+                if (await _dbVilla.FindByIdAsync(u => u.Id == updateDTO.VillaId) == null)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string>() { "Villa is empty" };
+                    _response.ErrorMessages = new List<string>() { "Villa ID is invalid" };
 
-                    _logger.Log("Villa is empty", "error");
+                    _logger.Log("Villa ID is invalid", "error");
 
                     return BadRequest(_response);
                 }
 
-                if (updateDTO.Rate < 0)
-                {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string>() { "Rate cannot be negative" };
 
-                    _logger.Log("Rate cannot be negative", "error");
+                VillaNumber model = _mapper.Map<VillaNumber>(updateDTO);
+                model.VillaNo = id;
 
-                    return BadRequest(_response);
-                }
+                await _dbVillaNumber.UpdateAsync(id, model);
 
-                if (updateDTO.Sqft < 0)
-                {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages = new List<string>() { "Sqft cannot be negative" };
+                _logger.Log($"VillaNumber {villaNumber.VillaNo} updated successfully", "warning");
 
-                    _logger.Log("Sqft cannot be negative", "error");
-
-                    return BadRequest(_response);
-                }
-
-                Villa model = _mapper.Map<Villa>(updateDTO);
-                model.Id = id;
-
-                await _dbVilla.UpdateAsync(id, model);
-
-                _logger.Log($"Villa {villa.Name} updated successfully", "warning");
-
-                _response.Data = _mapper.Map<VillaDTO>(model);
+                _response.Data = _mapper.Map<VillaNumberDTO>(model);
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
 

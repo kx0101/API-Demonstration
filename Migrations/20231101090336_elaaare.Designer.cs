@@ -12,8 +12,8 @@ using apiprac;
 namespace apiprac.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20231031104755_finals")]
-    partial class finals
+    [Migration("20231101090336_elaaare")]
+    partial class elaaare
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,6 +45,43 @@ namespace apiprac.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Villas");
+                });
+
+            modelBuilder.Entity("apiprac.VillaNumber", b =>
+                {
+                    b.Property<Guid>("VillaNo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SpecialDetails")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdateDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VillaId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("VillaNo");
+
+                    b.HasIndex("VillaId");
+
+                    b.ToTable("VillaNumbers");
+                });
+
+            modelBuilder.Entity("apiprac.VillaNumber", b =>
+                {
+                    b.HasOne("apiprac.Villa", "Villa")
+                        .WithMany()
+                        .HasForeignKey("VillaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Villa");
                 });
 #pragma warning restore 612, 618
         }
