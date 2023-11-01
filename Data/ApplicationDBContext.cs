@@ -24,8 +24,9 @@ namespace apiprac
         }
 
         public DbSet<Villa> Villas { get; set; }
-        
+
         public DbSet<VillaNumber> VillaNumbers { get; set; }
 
+        public DbSet<LocalUser> Users { get; set; }
     }
 }
