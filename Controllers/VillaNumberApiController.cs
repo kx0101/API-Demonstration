@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace apiprac
 {
-    [Route("api/villanumbers")]
+    [Route("api/villa-numbers")]
     [ApiController]
     public class VillasNumberApiController : ControllerBase
     {
