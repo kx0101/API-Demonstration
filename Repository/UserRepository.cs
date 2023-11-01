@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using BCrypt.Net;
 using Microsoft.IdentityModel.Tokens;
 
 namespace apiprac
@@ -28,11 +29,27 @@ namespace apiprac
             return false;
         }
 
+        public bool VerifyPassword(LocalUser user, string password)
+        {
+            return BCrypt.Net.BCrypt.HashPassword(password, user.Salt) == user.Password;
+        }
+
         public async Task<LoginResponseDTO> Login(LoginRequestDTO loginRequestDTO)
         {
-            var user = _db.Users.FirstOrDefault(x => x.UserName.ToLower() == loginRequestDTO.UserName.ToLower() && x.Password == loginRequestDTO.Password.ToLower());
+            var user = _db.Users.FirstOrDefault(x => x.UserName == loginRequestDTO.UserName);
 
             if (user == null)
+            {
+                return new LoginResponseDTO()
+                {
+                    Token = "",
+                    User = null,
+                };
+            }
+
+            bool isUserVerified = VerifyPassword(user, loginRequestDTO.Password);
+
+            if (!isUserVerified)
             {
                 return new LoginResponseDTO()
                 {
@@ -67,12 +84,16 @@ namespace apiprac
 
         public async Task<LocalUser> Register(RegisterRequestDTO registerRequestDTO)
         {
+            string salt = BCrypt.Net.BCrypt.GenerateSalt();
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerRequestDTO.Password, salt);
+
             LocalUser user = new LocalUser()
             {
                 UserName = registerRequestDTO.UserName,
-                Password = registerRequestDTO.Password,
+                Password = hashedPassword,
                 Name = registerRequestDTO.Name,
                 Role = registerRequestDTO.Role,
+                Salt = salt,
             };
 
             _db.Users.Add(user);

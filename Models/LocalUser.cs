@@ -3,7 +3,6 @@ namespace apiprac
 
     public class LocalUser
     {
-
         public Guid Id { get; set; }
 
         public string UserName { get; set; }
@@ -13,5 +12,7 @@ namespace apiprac
         public string Password { get; set; }
 
         public string Role { get; set; }
+
+        public string Salt { get; set; }
     }
 }
