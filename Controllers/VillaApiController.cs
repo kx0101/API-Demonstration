@@ -28,13 +28,19 @@ namespace apiprac
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<APIResponse>> GetVillas()
+        public async Task<ActionResult<APIResponse>> GetVillas([FromQuery] VillaFilterDTO villaFilterDTO)
         {
             _logger.Log("Getting all villas", "");
 
             try
             {
-                IEnumerable<Villa> villaList = await _dbVilla.FindByCriteriaAsync();
+                VillaFilterBuilder villaFilter = new VillaFilterBuilder();
+
+                villaFilter.setName(villaFilterDTO.Name)
+                           .setRate(villaFilterDTO.Rate)
+                           .setSqft(villaFilterDTO.Sqft);
+
+                IEnumerable<Villa> villaList = await _dbVilla.FindByCriteriaAsync(villaFilter.Build());
 
                 _response.Data = _mapper.Map<List<VillaDTO>>(villaList);
                 _response.StatusCode = HttpStatusCode.OK;

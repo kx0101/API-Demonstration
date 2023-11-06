@@ -20,18 +20,6 @@ namespace apiprac
             await SaveAsync();
         }
 
-        public async Task<List<T>> FindByCriteriaAsync(Expression<Func<T, bool>> filter = null)
-        {
-            IQueryable<T> query = dbSet;
-
-            if (filter != null)
-            {
-                query = query.Where(filter);
-            }
-
-            return await query.ToListAsync();
-        }
-
         public async Task<T> FindByIdAsync(Expression<Func<T, bool>> filter = null)
         {
             IQueryable<T> query = dbSet;

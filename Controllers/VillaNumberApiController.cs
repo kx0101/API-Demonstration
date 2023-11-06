@@ -26,13 +26,19 @@ namespace apiprac
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<APIResponse>> GetVillaNumbers()
+        public async Task<ActionResult<APIResponse>> GetVillaNumbers([FromQuery] VillaNumberFilterDTO villaNumberFilterDTO)
         {
             _logger.Log("Getting all villa numbers", "");
 
             try
             {
-                IEnumerable<VillaNumber> villaList = await _dbVillaNumber.FindByCriteriaAsync();
+                VillaNumberFilterBuilder villaNumberFilter = new VillaNumberFilterBuilder();
+
+                villaNumberFilter.setVillaId(villaNumberFilterDTO.VillaId)
+                                 .setVillaNo(villaNumberFilterDTO.VillaNo)
+                                 .setSpecialDetails(villaNumberFilterDTO.SpecialDetails);
+
+                IEnumerable<VillaNumber> villaList = await _dbVillaNumber.FindByCriteriaAsync(villaNumberFilter.Build());
 
                 _response.Data = _mapper.Map<List<VillaNumberDTO>>(villaList);
                 _response.StatusCode = HttpStatusCode.OK;

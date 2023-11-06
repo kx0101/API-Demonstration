@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace apiprac
 {
     public class VillaRepository : Repository<Villa>, IVillaRepository
@@ -21,5 +23,28 @@ namespace apiprac
 
             return villa;
         }
+
+        public async Task<List<Villa>> FindByCriteriaAsync(Villa filter)
+        {
+            IQueryable<Villa> query = dbSet;
+
+            if (filter.Name != null)
+            {
+                query = query.Where(v => v.Name == filter.Name);
+            }
+
+            if (filter.Rate > 0)
+            {
+                query = query.Where(v => v.Rate == filter.Rate);
+            }
+
+            if (filter.Sqft > 0)
+            {
+                query = query.Where(v => v.Sqft == filter.Sqft);
+            }
+
+            return await query.ToListAsync();
+        }
+
     }
 }

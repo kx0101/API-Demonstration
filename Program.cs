@@ -1,20 +1,30 @@
 using System.Text;
 using apiprac;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(option =>
+{
+    option.CacheProfiles.Add("Default", new CacheProfile
+    {
+        Duration = 60
+    });
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<ILogging, Logging>();
 builder.Services.AddDbContext<ApplicationDBContext>();
 builder.Services.AddAutoMapper(typeof(MappingConfig));
+
 builder.Services.AddScoped<IVillaRepository, VillaRepository>();
 builder.Services.AddScoped<IVillaNumberRepository, VillaNumberRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddResponseCaching();
 
 var key = builder.Configuration.GetValue<string>("AppSettings:Secret");
 

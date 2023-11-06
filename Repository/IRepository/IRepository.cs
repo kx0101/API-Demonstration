@@ -10,8 +10,6 @@ namespace apiprac
 
         Task SaveAsync();
 
-        Task<List<T>> FindByCriteriaAsync(Expression<Func<T, bool>>? filter = null);
-
         Task<T> FindByIdAsync(Expression<Func<T, bool>>? filter = null);
     }
 }
