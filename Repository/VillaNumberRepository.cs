@@ -23,7 +23,7 @@ namespace apiprac
             return villaNumber;
         }
 
-        public async Task<List<VillaNumber>> FindByCriteriaAsync(VillaNumber filter)
+        public async Task<List<VillaNumber>> FindByCriteriaAsync(VillaNumber filter, int page, int PageSize)
         {
             IQueryable<VillaNumber> query = dbSet;
 
@@ -41,6 +41,8 @@ namespace apiprac
             {
                 query = query.Where(villaNumber => villaNumber.VillaId == filter.VillaId);
             }
+
+            query = query.Skip((page - 1) * PageSize).Take(PageSize);
 
             return await query.ToListAsync();
         }

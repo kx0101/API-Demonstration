@@ -24,7 +24,7 @@ namespace apiprac
             return villa;
         }
 
-        public async Task<List<Villa>> FindByCriteriaAsync(Villa filter)
+        public async Task<List<Villa>> FindByCriteriaAsync(Villa filter, int page, int PageSize)
         {
             IQueryable<Villa> query = dbSet;
 
@@ -42,6 +42,8 @@ namespace apiprac
             {
                 query = query.Where(v => v.Sqft == filter.Sqft);
             }
+
+            query = query.Skip((page - 1) * PageSize).Take(PageSize);
 
             return await query.ToListAsync();
         }

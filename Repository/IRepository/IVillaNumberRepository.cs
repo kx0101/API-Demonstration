@@ -4,6 +4,6 @@ namespace apiprac
     {
         Task<VillaNumber> UpdateAsync(Guid id, VillaNumber entity);
 
-        Task<List<VillaNumber>> FindByCriteriaAsync(VillaNumber entity);
+        Task<List<VillaNumber>> FindByCriteriaAsync(VillaNumber entity, int page, int pageSize);
     }
 }

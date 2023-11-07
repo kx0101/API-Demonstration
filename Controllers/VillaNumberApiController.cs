@@ -26,7 +26,7 @@ namespace apiprac
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<APIResponse>> GetVillaNumbers([FromQuery] VillaNumberFilterDTO villaNumberFilterDTO)
+        public async Task<ActionResult<APIResponse>> GetVillaNumbers([FromQuery] VillaNumberFilterDTO villaNumberFilterDTO, int page = 1, int PageSize = 10)
         {
             _logger.Log("Getting all villa numbers", "");
 
@@ -38,11 +38,14 @@ namespace apiprac
                                  .setVillaNo(villaNumberFilterDTO.VillaNo)
                                  .setSpecialDetails(villaNumberFilterDTO.SpecialDetails);
 
-                IEnumerable<VillaNumber> villaList = await _dbVillaNumber.FindByCriteriaAsync(villaNumberFilter.Build());
+                IEnumerable<VillaNumber> villaNumberList = await _dbVillaNumber.FindByCriteriaAsync(villaNumberFilter.Build(), page, PageSize);
 
-                _response.Data = _mapper.Map<List<VillaNumberDTO>>(villaList);
+                _response.Data = _mapper.Map<List<VillaNumberDTO>>(villaNumberList);
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
+                _response.Page = page;
+                _response.PageSize = PageSize;
+                _response.TotalCount = villaNumberList.Count();
 
                 return Ok(_response);
 

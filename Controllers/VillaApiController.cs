@@ -28,7 +28,7 @@ namespace apiprac
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<APIResponse>> GetVillas([FromQuery] VillaFilterDTO villaFilterDTO)
+        public async Task<ActionResult<APIResponse>> GetVillas([FromQuery] VillaFilterDTO villaFilterDTO, int page = 1, int PageSize = 10)
         {
             _logger.Log("Getting all villas", "");
 
@@ -40,11 +40,14 @@ namespace apiprac
                            .setRate(villaFilterDTO.Rate)
                            .setSqft(villaFilterDTO.Sqft);
 
-                IEnumerable<Villa> villaList = await _dbVilla.FindByCriteriaAsync(villaFilter.Build());
+                IEnumerable<Villa> villaList = await _dbVilla.FindByCriteriaAsync(villaFilter.Build(), page, PageSize);
 
                 _response.Data = _mapper.Map<List<VillaDTO>>(villaList);
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
+                _response.Page = page;
+                _response.PageSize = PageSize;
+                _response.TotalCount = villaList.Count();
 
                 return Ok(_response);
 
@@ -89,6 +92,7 @@ namespace apiprac
                 _response.Data = _mapper.Map<VillaDTO>(villa);
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
+                _response.TotalCount = 1;
 
                 return Ok(_response);
             }
