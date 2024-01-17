@@ -28,7 +28,7 @@ namespace apiprac
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<APIResponse>> GetVillaNumbers([FromQuery] VillaNumberFilterDTO villaNumberFilterDTO, int page = 1, int PageSize = 10)
         {
-            _logger.Log("Getting all villa numbers", "");
+            _logger.Log("Getting all villa numbers...", "");
 
             try
             {
