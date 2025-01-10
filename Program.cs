@@ -14,6 +14,7 @@ builder.Services.AddControllers(option =>
         Duration = 60
     });
 });
+//
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<ILogging, Logging>();
